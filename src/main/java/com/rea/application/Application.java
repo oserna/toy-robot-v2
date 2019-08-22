@@ -42,7 +42,7 @@ public class Application {
 
                 Direction direction = Direction.getType(placeParams[2].trim());
 
-                if (direction == null){
+                if (direction == Direction.VOID){
                     return currentState;
                 }
 
@@ -71,7 +71,13 @@ public class Application {
         REPORT(){
             @Override
             public Tuple<Position, Direction> execute(String [] input) {
-                System.out.println(currentState.getA()+","+currentState.getB());
+
+                if(currentState == null){
+                    System.out.println("Not placed yet!");
+
+                }else{
+                    System.out.println(currentState.getA()+","+currentState.getB());
+                }
                 return currentState;
             }
         },
@@ -99,9 +105,11 @@ public class Application {
 
     //creates the state with Postion and Direction
     private static Function<Tuple<Position, Direction>, Tuple<Position, Direction>> place = tuple -> {
-        if(currentState == null){
+
+        if(withinBounds(tuple.getA(), bounds) && currentState == null){
             currentState = tuple;
         }
+
         return currentState;
     };
 
@@ -141,20 +149,7 @@ public class Application {
     //alters the state rotating to the right
     private static Function<Tuple<Position, Direction>, Tuple<Position, Direction>> rigth = (tuple) -> {
 
-        Tuple<Position, Direction> newState = null;
-        Direction[] values = Direction.values();
-        for (int i = 0; i < values.length; i++) {
-            if (tuple.getB() == values[i]) {
-                if (i == values.length - 1) {
-                    newState = new Tuple<>(tuple.getA(), values[0]);
-                }else{
-                    newState = new Tuple<>(tuple.getA(), values[i+1]);
-                }
-                break;
-            }
-        }
-
-        currentState = newState;
+        currentState = new Tuple<>(tuple.getA(), Direction.rigth(tuple.getB()));
 
         return currentState;
     };
@@ -162,22 +157,7 @@ public class Application {
     //alters the state rotating to the left
     private static Function<Tuple<Position, Direction>, Tuple<Position, Direction>> left = (tuple) -> {
 
-        Tuple<Position, Direction> newState = null;
-
-        Direction[] values = Direction.values();
-        for (int i = 0; i < values.length; i++) {
-            if (tuple.getB() == values[i]) {
-                if (i == 0) {
-                    newState = new Tuple<>(tuple.getA(), values[values.length - 1]);
-                }else{
-                    newState = new Tuple<>(tuple.getA(), values[i-1]);
-                }
-                break;
-            }
-        }
-
-
-        currentState = newState;
+        currentState = new Tuple<>(tuple.getA(), Direction.left(tuple.getB()));
 
         return currentState;
     };
@@ -203,8 +183,30 @@ public class Application {
 
     }
 
-    enum Direction {
-        NORTH, EAST, SOUTH, WEST;
+     enum Direction {
+
+        NORTH, EAST, SOUTH, WEST, VOID;
+
+        public static Direction rigth(Direction direction) {
+            switch (direction) {
+                case NORTH: return EAST;
+                case EAST: return SOUTH;
+                case SOUTH: return WEST;
+                case WEST: return NORTH;
+                default: return VOID;
+            }
+        }
+
+        public static  Direction left(Direction direction) {
+            switch (direction) {
+                case NORTH: return WEST;
+                case WEST:  return SOUTH;
+                case SOUTH: return EAST;
+                case EAST:  return NORTH;
+                default: return VOID;
+            }
+        }
+
         public static Direction getType(String direction) {
 
             for (Direction d : Direction.values()) {
@@ -213,9 +215,8 @@ public class Application {
                 }
             };
 
-            return null;
+            return VOID;
         }
-
     }
 
     static class Tuple<A, B> {
